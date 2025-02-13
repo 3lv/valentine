@@ -7,32 +7,17 @@ import { useFrame } from "@react-three/fiber"
 import type { Mesh } from "three"
 import { Button } from "@/components/ui/button"
 
-function Heart() {
-  const meshRef = useRef<Mesh>(null!)
+import HeartHologram from "@/components/HeartHologram"
 
-  useFrame(({ mouse }) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.x = mouse.y * 0.5
-      meshRef.current.rotation.y = mouse.x * 0.5
-    }
-  })
-
-  return (
-    <mesh ref={meshRef}>
-      <sphereGeometry args={[1, 32, 32]} />
-      <meshStandardMaterial color="red" wireframe />
-    </mesh>
-  )
-}
 
 export default function Hero() {
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
-      <div className="container px-4 md:px-6">
+    <section className="w-full py-24 md:py-24 lg:py-32 xl:py-48">
+      <div className="container px-4 md:px-6 mx-auto">
         <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
-          <div className="flex flex-col justify-center space-y-4">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
+          <div className="flex flex-col justify-center space-y-4 mx-auto">
+            <div className="space-y-2 sm:pt-12 md:pt-16">
+              <h1 className="pb-4 text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none whitespace-nowrap">
                 My Heart Beats for You
               </h1>
               <p className="max-w-[600px] text-muted-foreground md:text-xl">
@@ -47,12 +32,12 @@ export default function Hero() {
               </Button>
             </div>
           </div>
-          <div className="aspect-square overflow-hidden rounded-xl">
+          <div className="aspect-square rounded-xl">
             <Canvas>
               <ambientLight intensity={0.5} />
               <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
               <pointLight position={[-10, -10, -10]} />
-              <Heart />
+              <HeartHologram />
               <OrbitControls enableZoom={false} />
             </Canvas>
           </div>
