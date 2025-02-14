@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/dashboard/Sidebar'
 import { MobileSidebar } from '@/components/dashboard/MobileSidebar'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { Toaster } from '@/components/ui/toaster'
 
 export default function DashboardLayout({
   children,
@@ -44,6 +45,8 @@ export default function DashboardLayout({
         
         {children}
       </main>
+
+      <Toaster />
     </div>
   )
 }

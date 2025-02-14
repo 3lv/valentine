@@ -1,7 +1,31 @@
 import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
+import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
 admin.initializeApp();
+
+// Add this new function to create user profiles automatically
+export const createUserProfile = functions.auth.user().onCreate(async (user) => {
+  if (!user) {
+    console.log('No user data available');
+    return;
+  }
+
+  const userProfile = {
+    email: user.email,
+    displayName: user.displayName || user.email?.split('@')[0] || 'Anonymous',
+    photoURL: user.photoURL || null,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    coupleId: null, // Initialize with no couple
+  };
+
+  try {
+    await admin.firestore().collection('users').doc(user.uid).set(userProfile);
+    console.log(`Created profile for user ${user.uid}`);
+  } catch (error) {
+    console.error('Error creating user profile:', error);
+  }
+});
 
 export const handleCoupleRequestAccepted = onDocumentUpdated(
   'coupleRequests/{requestId}',
@@ -62,9 +86,14 @@ export const handleCoupleRequestAccepted = onDocumentUpdated(
 
         transaction.update(fromUserRef, { coupleId });
         transaction.update(toUserRef, { coupleId });
+
+        // Set custom claims for both users to include coupleId in their tokens
+        await admin.auth().setCustomUserClaims(fromUserId, { coupleId });
+        await admin.auth().setCustomUserClaims(toUserId, { coupleId });
       });
 
       console.log(`Couple document created with id: ${coupleId}`);
+      console.log(`Custom claims updated for users ${fromUserId} and ${toUserId}`);
     } catch (error) {
       console.error('Error processing couple request:', error);
     }

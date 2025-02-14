@@ -45,15 +45,13 @@ service cloud.firestore {
     // Couples rules
     match /couples/{coupleId} {
       allow read: if isSignedIn() && 
-        resource.data.members.hasAny([{
-          email: request.auth.token.email,
-          id: request.auth.uid
-        }]);
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.coupleId == coupleId;
       
       allow create: if isSignedIn() &&
         request.resource.data.members[0].id != request.resource.data.members[1].id &&
         (
-          request.resource.data.members[0].id == request.auth.uid ||
+          request.resource.data.members[1].id == request.auth.uid ||
           request.resource.data.members[1].id == request.auth.uid
         );
       
@@ -62,9 +60,16 @@ service cloud.firestore {
           email: request.auth.token.email,
           id: request.auth.uid
         }]) &&
-        request.resource.data.members == resource.data.members;
+        request.resource.data.members == resource.data.members &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['name', 'anniversary']);
       
       allow delete: if false; // Prevent deletion for now
+
+      match /backgrounds/{backgroundId} {
+        allow read, write: if isSignedIn() && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.coupleId == coupleId;
+      }
     }
   }
 }

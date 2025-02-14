@@ -58,22 +58,24 @@ export default function CouplePage() {
   useEffect(() => {
     if (!currentUser) return;
 
-    // Listen for couple (team) updates
-    const q = query(
-      collection(db, 'couples'),
-      where('members', 'array-contains', { 
-        id: currentUser.uid, 
-        email: currentUser.email,
-        displayName: currentUser.displayName || currentUser.email?.split('@')[0]
-      })
-    );
+    // Listen for user document to get coupleId
+    const userUnsubscribe = onSnapshot(doc(db, 'users', currentUser.uid), (userDoc) => {
+      const coupleId = userDoc.data()?.coupleId;
+      
+      if (coupleId) {
+        // If user has a coupleId, listen to that couple document
+        const coupleUnsubscribe = onSnapshot(doc(db, 'couples', coupleId), (coupleDoc) => {
+          if (coupleDoc.exists()) {
+            const coupleData = coupleDoc.data() as Omit<Couple, 'id'>;
+            setCouple({ ...coupleData, id: coupleDoc.id });
+            setCoupleName(coupleData.name);
+            setAnniversary(coupleData.anniversary);
+          } else {
+            setCouple(null);
+          }
+        });
 
-    const coupleUnsubscribe = onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
-        const coupleData = snapshot.docs[0].data() as Omit<Couple, 'id'>;
-        setCouple({ ...coupleData, id: snapshot.docs[0].id });
-        setCoupleName(coupleData.name);
-        setAnniversary(coupleData.anniversary);
+        return () => coupleUnsubscribe();
       } else {
         setCouple(null);
       }
@@ -111,7 +113,7 @@ export default function CouplePage() {
     });
 
     return () => {
-      coupleUnsubscribe();
+      userUnsubscribe();
       incomingUnsubscribe();
       outgoingUnsubscribe();
     };
@@ -224,6 +226,7 @@ export default function CouplePage() {
         description: "Couple details updated successfully!",
       });
     } catch (error) {
+      console.log("Debug error:", error);
       toast({
         title: "Error",
         description: "Failed to update couple details",

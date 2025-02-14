@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { storage, db } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
-import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import {
   HoverCard,
@@ -31,49 +31,54 @@ export default function BackgroundPage() {
   const [couple, setCouple] = useState<{ id: string } | null>(null);
 
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      return;
+    }
 
-    // Listen for couple updates
-    const coupleQuery = query(
-      collection(db, 'couples'),
-      where('members', 'array-contains', {
-        id: currentUser.uid,
-        email: currentUser.email,
-        displayName: currentUser.displayName || currentUser.email?.split('@')[0]
-      })
-    );
+    const userDocRef = doc(db, 'users', currentUser.uid);
 
-    const unsubscribe = onSnapshot(coupleQuery, (snapshot) => {
-      if (!snapshot.empty) {
-        const coupleDoc = snapshot.docs[0];
-        setCouple({ id: coupleDoc.id });
+    const userUnsubscribe = onSnapshot(userDocRef, (userDoc) => {
+      const coupleId = userDoc.data()?.coupleId;
+      
+      if (coupleId) {
+        setCouple({ id: coupleId });
         
-        // Listen for backgrounds in the couple's collection
         const backgroundsQuery = query(
-          collection(db, 'couples', coupleDoc.id, 'backgrounds'),
+          collection(db, 'couples', coupleId, 'backgrounds'),
           where('active', '==', true)
         );
 
-        onSnapshot(backgroundsQuery, (snapshot) => {
+        const backgroundsUnsubscribe = onSnapshot(backgroundsQuery, (snapshot) => {
           const newImages = snapshot.docs.map(doc => doc.data() as BackgroundImage);
           setImages(newImages);
         });
+
+        return () => backgroundsUnsubscribe();
       } else {
         setCouple(null);
         setImages([]);
       }
     });
 
-    return () => unsubscribe();
+    return () => userUnsubscribe();
   }, [currentUser]);
 
   const handleFileSelect = async (file: File) => {
-    if (!currentUser || !couple) return;
+    if (!currentUser) {
+      return;
+    }
+    if (!couple) {
+      return;
+    }
 
     setIsUploading(true);
     setUploadProgress(0);
     try {
       const storageRef = ref(storage, `couples/${couple.id}/backgrounds/${Date.now()}-${file.name}`);
+
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+
       const uploadTask = uploadBytesResumable(storageRef, file);
 
       uploadTask.on('state_changed', 
@@ -103,7 +108,6 @@ export default function BackgroundPage() {
         description: "Image uploaded successfully",
       });
     } catch (error) {
-      console.error('Error uploading image:', error);
       toast({
         title: "Error",
         description: "Failed to upload image",
@@ -179,7 +183,7 @@ export default function BackgroundPage() {
           <CardTitle>Recent Backgrounds</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {images.map((image) => (
               <HoverCard key={image.imageUrl + image.timestamp}>
                 <HoverCardTrigger>
