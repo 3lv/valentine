@@ -37,7 +37,7 @@ export default function Hero() {
             </div>
           </div>
           <div className="h-[50vh] md:h-auto md:aspect-square rounded-xl order-1 lg:order-2">
-            <Canvas>
+            <Canvas camera={{ position: [0, 0, 4] }}>
               <ambientLight intensity={0.5} />
               <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
               <pointLight position={[-10, -10, -10]} />
@@ -50,7 +50,7 @@ export default function Hero() {
       <Button
         size="icon"
         variant="outline"
-        className="absolute bottom-24 left-1/2 -translate-x-1/2 rounded-full lg:hidden animate-bounce"
+        className="absolute bottom-28 left-1/2 -translate-x-1/2 rounded-full lg:hidden animate-bounce"
         asChild
       >
         <Link href="#features">
