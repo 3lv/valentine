@@ -13,11 +13,11 @@ import Link from "next/link"
 
 export default function Hero() {
   return (
-    <section className="w-full h-[calc(100vh-3.5rem)] flex items-center">
+    <section className="w-full min-h-[calc(100vh-3.5rem)] flex items-center py-8 md:py-0 mt-16 lg:mt-0">
       <div className="container px-4 md:px-6 mx-auto">
-        <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
+        <div className="flex flex-col lg:grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
           <div className="flex flex-col justify-center space-y-4 mx-auto">
-            <div className="space-y-2 sm:pt-12 md:pt-16">
+            <div className="space-y-2">
               <h1 className="pb-4 text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none whitespace-nowrap">
                 My Heart Beats for You
               </h1>
@@ -35,7 +35,7 @@ export default function Hero() {
               </Button>
             </div>
           </div>
-          <div className="aspect-square rounded-xl">
+          <div className="h-[50vh] md:h-auto md:aspect-square rounded-xl order-1 lg:order-2">
             <Canvas>
               <ambientLight intensity={0.5} />
               <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
