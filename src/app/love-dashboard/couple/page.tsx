@@ -260,15 +260,21 @@ export default function CouplePage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Invite your partner by email</Label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   id="email"
                   type="email"
                   placeholder="partner@example.com"
                   value={searchEmail}
                   onChange={(e) => setSearchEmail(e.target.value)}
+                  className="flex-1"
                 />
-                <Button onClick={handleInvite}>Send Invitation</Button>
+                <Button 
+                  onClick={handleInvite}
+                  className="w-full sm:w-auto"
+                >
+                  Send Invitation
+                </Button>
               </div>
             </div>
           </CardContent>

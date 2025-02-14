@@ -6,6 +6,7 @@ import { useRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import type { Mesh } from "three"
 import { Button } from "@/components/ui/button"
+import { ChevronDown } from "lucide-react"
 
 import HeartHologram from "@/components/HeartHologram"
 import Link from "next/link"
@@ -13,7 +14,7 @@ import Link from "next/link"
 
 export default function Hero() {
   return (
-    <section className="w-full min-h-[calc(100vh-3.5rem)] flex items-center py-8 md:py-0 mt-16 lg:mt-0">
+    <section className="w-full min-h-[calc(100vh-3.5rem)] flex items-center py-8 md:py-0 mt-16 lg:mt-0 relative">
       <div className="container px-4 md:px-6 mx-auto">
         <div className="flex flex-col lg:grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
           <div className="flex flex-col justify-center space-y-4 mx-auto">
@@ -46,6 +47,16 @@ export default function Hero() {
           </div>
         </div>
       </div>
+      <Button
+        size="icon"
+        variant="outline"
+        className="absolute bottom-16 left-1/2 -translate-x-1/2 rounded-full lg:hidden animate-bounce"
+        asChild
+      >
+        <Link href="#features">
+          <ChevronDown className="h-4 w-4" />
+        </Link>
+      </Button>
     </section>
   )
 }

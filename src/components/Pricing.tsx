@@ -2,6 +2,7 @@ import { Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card"
+import Link from "next/link"
 
 export default function Pricing() {
   return (
@@ -10,12 +11,12 @@ export default function Pricing() {
         <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-center mb-12">Choose Your Love Plan</h2>
         <div className="grid gap-6 lg:grid-cols-3 lg:gap-12">
           {/* Free Plan with regular Card */}
-          <Card>
+          <Card className="flex flex-col h-[400px]">
             <CardHeader>
               <CardTitle className="text-2xl font-bold">Free</CardTitle>
               <CardDescription>Life without your love is like a broken pencil - pointless</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1">
               <ul className="space-y-2">
                 <li className="flex items-center">
                   <X className="mr-2 h-4 w-4 text-destructive" />
@@ -23,17 +24,17 @@ export default function Pricing() {
                 </li>
               </ul>
             </CardContent>
-            <CardFooter className="mt-32">
+            <CardFooter className="mt-auto">
               <Button className="w-full" variant="outline" disabled>Select Plan</Button>
             </CardFooter>
           </Card>
           {/* Free Plan with regular Card */}
-          <Card>
+          <Card className="flex flex-col h-[400px]">
             <CardHeader>
               <CardTitle className="text-2xl font-bold">200$</CardTitle>
               <CardDescription>Still pointless</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1">
               <ul className="space-y-2">
                 <li className="flex items-center">
                   <X className="mr-2 h-4 w-4 text-destructive" />
@@ -41,13 +42,13 @@ export default function Pricing() {
                 </li>
               </ul>
             </CardContent>
-            <CardFooter className="mt-32">
+            <CardFooter className="mt-auto">
               <Button className="w-full" variant="outline" disabled>Select Plan</Button>
             </CardFooter>
           </Card>
 
           {/* Your Love Plan with 3D Card */}
-          <CardContainer className="w-full h-full inter-var">
+          <CardContainer className="w-full h-[400px] inter-var">
             <CardBody className="bg-primary relative group/card dark:hover:shadow-2xl dark:hover:shadow-primary/[0.1] rounded-xl p-6 w-full h-full flex flex-col">
               <div className="flex-1">
                 <CardItem
@@ -82,9 +83,11 @@ export default function Pricing() {
               </div>
               <CardItem
                 translateZ="100"
-                className="w-full mt-6"
+                className="w-full mt-auto"
               >
-                <Button className="w-full" variant="secondary">Choose Love</Button>
+                <Button className="w-full" variant="secondary" asChild>
+                  <Link href="/love-dashboard/background">Choose Love</Link>
+                </Button>
               </CardItem>
             </CardBody>
           </CardContainer>
