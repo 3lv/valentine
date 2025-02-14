@@ -15,11 +15,14 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
+import { Skeleton } from "@/components/ui/skeleton"
+import ImageWithSkeleton from '@/components/dashboard/ImageWithSkeleton';
 
 interface BackgroundImage {
   imageUrl: string;
   timestamp: string;
   userId: string;
+  isLoading?: boolean;
 }
 
 export default function BackgroundPage() {
@@ -29,12 +32,14 @@ export default function BackgroundPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [couple, setCouple] = useState<{ id: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!currentUser) {
       return;
     }
 
+    setIsLoading(true);
     const userDocRef = doc(db, 'users', currentUser.uid);
 
     const userUnsubscribe = onSnapshot(userDocRef, (userDoc) => {
@@ -49,14 +54,19 @@ export default function BackgroundPage() {
         );
 
         const backgroundsUnsubscribe = onSnapshot(backgroundsQuery, (snapshot) => {
-          const newImages = snapshot.docs.map(doc => doc.data() as BackgroundImage);
+          const newImages = snapshot.docs.map(doc => ({
+            ...doc.data() as BackgroundImage,
+            isLoading: false
+          }));
           setImages(newImages);
+          setIsLoading(false);
         });
 
         return () => backgroundsUnsubscribe();
       } else {
         setCouple(null);
         setImages([]);
+        setIsLoading(false);
       }
     });
 
@@ -64,21 +74,24 @@ export default function BackgroundPage() {
   }, [currentUser]);
 
   const handleFileSelect = async (file: File) => {
-    if (!currentUser) {
-      return;
-    }
-    if (!couple) {
-      return;
-    }
+    if (!currentUser || !couple) return;
 
     setIsUploading(true);
     setUploadProgress(0);
+
+    // Add a temporary skeleton image
+    const tempImage: BackgroundImage = {
+      imageUrl: '',
+      timestamp: new Date().toISOString(),
+      userId: currentUser.uid,
+      isLoading: true
+    };
+    setImages(prev => [tempImage, ...prev]);
+
     try {
       const storageRef = ref(storage, `couples/${couple.id}/backgrounds/${Date.now()}-${file.name}`);
-
       const userDocRef = doc(db, 'users', currentUser.uid);
       const userDoc = await getDoc(userDocRef);
-
       const uploadTask = uploadBytesResumable(storageRef, file);
 
       uploadTask.on('state_changed', 
@@ -108,6 +121,7 @@ export default function BackgroundPage() {
         description: "Image uploaded successfully",
       });
     } catch (error) {
+      setImages(prev => prev.filter(img => !img.isLoading));
       toast({
         title: "Error",
         description: "Failed to upload image",
@@ -188,23 +202,29 @@ export default function BackgroundPage() {
               <HoverCard key={image.imageUrl + image.timestamp}>
                 <HoverCardTrigger>
                   <div className="relative w-full pb-[177.78%] transition-transform hover:scale-105">
-                    <img
-                      src={image.imageUrl}
-                      alt={`Background ${image.timestamp}`}
-                      className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-md"
-                    />
+                    {image.isLoading ? (
+                      <Skeleton className="absolute inset-0 w-full h-full rounded-lg" />
+                    ) : (
+                      <ImageWithSkeleton
+                        src={image.imageUrl}
+                        alt={`Background ${image.timestamp}`}
+                        className="transition-transform hover:scale-105"
+                      />
+                    )}
                   </div>
                 </HoverCardTrigger>
-                <HoverCardContent>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Uploaded on: {new Date(image.timestamp).toLocaleDateString()}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Uploaded by: {currentUser.email}
-                    </p>
-                  </div>
-                </HoverCardContent>
+                {!image.isLoading && (
+                  <HoverCardContent>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        Uploaded on: {new Date(image.timestamp).toLocaleDateString()}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Uploaded by: {currentUser.email}
+                      </p>
+                    </div>
+                  </HoverCardContent>
+                )}
               </HoverCard>
             ))}
           </div>
