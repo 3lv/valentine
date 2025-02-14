@@ -21,7 +21,8 @@ export const AnimatedTestimonials = ({
   const [active, setActive] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragX = useMotionValue(0);
-  const dragProgress = useTransform(dragX, [-200, 200], [1, -1]);
+  const dragY = useMotionValue(0);
+  const dragProgress = useTransform(dragX, [-100, 100], [1, -1]); // Reduced threshold
 
   const handleNext = () => {
     setActive((prev) => (prev + 1) % testimonials.length);
@@ -48,15 +49,30 @@ export const AnimatedTestimonials = ({
 
   const handleDragEnd = () => {
     const x = dragX.get();
+    const y = dragY.get();
     setIsDragging(false);
-    if (Math.abs(x) > 50) {
-      if (x > 0) {
-        handlePrev();
+    
+    // Calculate total drag distance using Pythagorean theorem
+    const dragDistance = Math.sqrt(x * x + y * y);
+    
+    if (dragDistance > 30) { // Reduced threshold from 50 to 30
+      // Determine primary direction of drag
+      if (Math.abs(x) > Math.abs(y)) {
+        if (x > 0) {
+          handlePrev();
+        } else {
+          handleNext();
+        }
       } else {
-        handleNext();
+        if (y > 0) {
+          handlePrev();
+        } else {
+          handleNext();
+        }
       }
     }
     dragX.set(0);
+    dragY.set(0);
   };
 
   return (
@@ -68,12 +84,15 @@ export const AnimatedTestimonials = ({
               {testimonials.map((testimonial, index) => (
                 <motion.div
                   key={testimonial.src}
-                  drag="x"
-                  dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.2}
+                  drag={true} // Allow drag in all directions
+                  dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                  dragElastic={0.4} // Increased elasticity
                   onDragStart={() => setIsDragging(true)}
                   onDragEnd={handleDragEnd}
-                  style={{ x: isActive(index) ? dragX : 0 }}
+                  style={{ 
+                    x: isActive(index) ? dragX : 0,
+                    y: isActive(index) ? dragY : 0
+                  }}
                   initial={{
                     opacity: 0,
                     scale: 0.9,
@@ -100,7 +119,7 @@ export const AnimatedTestimonials = ({
                     duration: 0.4,
                     ease: "easeInOut",
                   }}
-                  className="absolute inset-0 origin-bottom touch-pan-y"
+                  className="absolute inset-0 origin-bottom cursor-grab active:cursor-grabbing"
                 >
                   <Image
                     src={testimonial.src}

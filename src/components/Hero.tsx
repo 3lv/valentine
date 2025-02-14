@@ -50,7 +50,7 @@ export default function Hero() {
       <Button
         size="icon"
         variant="outline"
-        className="absolute bottom-16 left-1/2 -translate-x-1/2 rounded-full lg:hidden animate-bounce"
+        className="absolute bottom-24 left-1/2 -translate-x-1/2 rounded-full lg:hidden animate-bounce"
         asChild
       >
         <Link href="#features">
