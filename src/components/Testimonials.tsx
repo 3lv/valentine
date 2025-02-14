@@ -27,7 +27,7 @@ export default function Testimonials() {
       quote:
         "Christmas brought more than just presents - it brought us closer together. Your smile was the best gift of all.",
       name: "Christmas Joy",
-      designation: "December 25th, 2024",
+      designation: "December 20th*, 2024",
       src: "/images/merry-christmas.jpeg",
     },
     {
