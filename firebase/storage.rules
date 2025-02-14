@@ -1,0 +1,38 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Default rule - deny all access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // If you later add profile pictures or couple photos
+    match /users/{userId}/profile/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId &&
+        request.resource.size < 5 * 1024 * 1024 && // 5MB max
+        request.resource.contentType.matches('image/.*'); // Only images
+    }
+
+    match /couples/{coupleId}/backgrounds/{fileName} {
+      allow read: if isSignedIn() &&
+        firestore.get(/databases/(default)/documents/couples/$(coupleId)).data.members.hasAny([{
+          email: request.auth.token.email,
+          id: request.auth.uid
+        }]);
+      
+      allow write: if isSignedIn() &&
+        firestore.get(/databases/(default)/documents/couples/$(coupleId)).data.members.hasAny([{
+          email: request.auth.token.email,
+          id: request.auth.uid
+        }]) &&
+        request.resource.size < 10 * 1024 * 1024 && // 10MB max
+        request.resource.contentType.matches('image/.*'); // Only images
+    }
+  }
+}

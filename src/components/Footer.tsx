@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="container px-4 md:px-6 mx-auto">
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <div className="flex items-center gap-2">
-            <Heart className="h-6 w-6 text-primary" />
+            <Heart className="h-6 w-6 text-love/50" />
             <span className="text-lg font-semibold">Forever Yours</span>
           </div>
           <p className="text-sm text-muted-foreground">© 2025 Valentine's Day. All rights reserved.</p>

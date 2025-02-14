@@ -54,8 +54,8 @@ export default function Header() {
       >
         <div className={`flex h-14 items-center ${isScrolled ? 'justify-between' : ''}`}>
           <Link className="flex items-center justify-center" href="/">
-            <Heart className="h-6 w-6 text-destructive" />
-            <span className={`pl-2 ${isScrolled ? 'sr-only' : ''}`}>Valentine's Day</span>
+            <Heart className="h-6 w-6 text-love/50" />
+            <span className={`pl-2 hidden sm:inline ${isScrolled ? 'sr-only' : ''}`}>Valentine's Day</span>
           </Link>
           <nav className="ml-auto flex gap-4 sm:gap-6">
             <Link className="text-sm font-medium hover:underline underline-offset-4" href="#features">

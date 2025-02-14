@@ -1,7 +1,7 @@
 "use client";
 
 import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
@@ -19,6 +19,9 @@ export const AnimatedTestimonials = ({
   autoplay?: boolean;
 }) => {
   const [active, setActive] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragX = useMotionValue(0);
+  const dragProgress = useTransform(dragX, [-200, 200], [1, -1]);
 
   const handleNext = () => {
     setActive((prev) => (prev + 1) % testimonials.length);
@@ -33,24 +36,44 @@ export const AnimatedTestimonials = ({
   };
 
   useEffect(() => {
-    if (autoplay) {
+    if (autoplay && !isDragging) {
       const interval = setInterval(handleNext, 5000);
       return () => clearInterval(interval);
     }
-  }, [autoplay]);
+  }, [autoplay, isDragging]);
 
   const randomRotateY = () => {
     return Math.floor(Math.random() * 21) - 10;
   };
+
+  const handleDragEnd = () => {
+    const x = dragX.get();
+    setIsDragging(false);
+    if (Math.abs(x) > 50) {
+      if (x > 0) {
+        handlePrev();
+      } else {
+        handleNext();
+      }
+    }
+    dragX.set(0);
+  };
+
   return (
     <div className="max-w-sm md:max-w-4xl mx-auto antialiased font-sans px-4 md:px-8 lg:px-12 py-20">
-      <div className="relative grid grid-cols-1 md:grid-cols-2  gap-20">
+      <div className="relative grid grid-cols-1 md:grid-cols-2 gap-20">
         <div>
           <div className="relative h-80 w-full">
             <AnimatePresence>
               {testimonials.map((testimonial, index) => (
                 <motion.div
                   key={testimonial.src}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.2}
+                  onDragStart={() => setIsDragging(true)}
+                  onDragEnd={handleDragEnd}
+                  style={{ x: isActive(index) ? dragX : 0 }}
                   initial={{
                     opacity: 0,
                     scale: 0.9,
@@ -77,7 +100,7 @@ export const AnimatedTestimonials = ({
                     duration: 0.4,
                     ease: "easeInOut",
                   }}
-                  className="absolute inset-0 origin-bottom"
+                  className="absolute inset-0 origin-bottom touch-pan-y"
                 >
                   <Image
                     src={testimonial.src}
@@ -92,7 +115,7 @@ export const AnimatedTestimonials = ({
             </AnimatePresence>
           </div>
         </div>
-        <div className="flex justify-between flex-col py-4">
+        <div className="h-80 flex justify-between flex-col py-4">
           <motion.div
             key={active}
             initial={{

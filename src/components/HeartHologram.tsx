@@ -48,7 +48,7 @@ export default function HeartHologram(props: any) {
   return (
     <mesh {...props} ref={meshRef} scale={[1, 1, 1]} position={[0, -0.95, 0]}>
       <extrudeGeometry args={[heartShape, extrudeSettings]} />
-      <meshStandardMaterial color="#ff1493" wireframe opacity={0.8} transparent />
+      <meshStandardMaterial color="#ff1493" wireframe opacity={1} transparent />
     </mesh>
   )
 }

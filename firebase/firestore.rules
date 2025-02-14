@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isUserEmail(email) {
+      return request.auth.token.email == email;
+    }
+    
+    match /users/{userId} {
+  		allow read: if isSignedIn() && request.auth.uid == userId;
+  		allow create: if isSignedIn() && request.auth.uid == userId;
+  		allow update: if isSignedIn() && request.auth.uid == userId;
+		}
+
+    // Couple Requests rules
+    match /coupleRequests/{requestId} {
+      allow read: if isSignedIn() && (
+        isUserEmail(resource.data.fromUserEmail) || 
+        isUserEmail(resource.data.toUserEmail)
+      );
+      
+      allow create: if isSignedIn() && 
+        request.resource.data.fromUserId == request.auth.uid &&
+        request.resource.data.fromUserEmail == request.auth.token.email &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.toUserEmail != request.auth.token.email;
+      
+      
+      allow update: if isSignedIn() && 
+        isUserEmail(resource.data.toUserEmail) &&
+        request.resource.data.fromUserId == resource.data.fromUserId &&
+        request.resource.data.fromUserEmail == resource.data.fromUserEmail &&
+        request.resource.data.toUserEmail == resource.data.toUserEmail;
+      
+      allow delete: if isSignedIn() && (
+        isUserEmail(resource.data.fromUserEmail) || 
+        isUserEmail(resource.data.toUserEmail)
+      );
+    }
+
+    // Couples rules
+    match /couples/{coupleId} {
+      allow read: if isSignedIn() && 
+        resource.data.members.hasAny([{
+          email: request.auth.token.email,
+          id: request.auth.uid
+        }]);
+      
+      allow create: if isSignedIn() &&
+        request.resource.data.members[0].id != request.resource.data.members[1].id &&
+        (
+          request.resource.data.members[0].id == request.auth.uid ||
+          request.resource.data.members[1].id == request.auth.uid
+        );
+      
+      allow update: if isSignedIn() && 
+        resource.data.members.hasAny([{
+          email: request.auth.token.email,
+          id: request.auth.uid
+        }]) &&
+        request.resource.data.members == resource.data.members;
+      
+      allow delete: if false; // Prevent deletion for now
+    }
+  }
+}
