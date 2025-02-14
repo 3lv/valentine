@@ -3,6 +3,7 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Mesh, Shape, ExtrudeGeometry, Vector3 } from 'three'
+import * as THREE from 'three'
 
 export default function HeartHologram(props: any) {
   const meshRef = useRef<Mesh>(null!)
@@ -21,9 +22,18 @@ export default function HeartHologram(props: any) {
       // Create a double-beat effect by modifying the sine wave
       const modifiedHeartbeat = Math.pow(heartbeat, 2) * (heartbeat > 0 ? 1 : 0.3)
       
-      meshRef.current.scale.x = baseScale + modifiedHeartbeat * pulseIntensity
-      meshRef.current.scale.y = baseScale + modifiedHeartbeat * pulseIntensity
-      meshRef.current.scale.z = baseScale + modifiedHeartbeat * pulseIntensity
+      // Apply scale pulse
+      meshRef.current.scale.setScalar(baseScale + modifiedHeartbeat * pulseIntensity)
+
+      // Update material color based on pulse, but only when expanding
+      if (meshRef.current.material instanceof THREE.MeshStandardMaterial) {
+        const baseColor = new THREE.Color(0xff1493) // Deep pink
+        const pulseColor = new THREE.Color(0xff69b4) // Hot pink
+        
+        // Only pulse color when heartbeat is positive (during expansion)
+        const colorIntensity = heartbeat > 0 ? modifiedHeartbeat : 0
+        meshRef.current.material.color.lerpColors(baseColor, pulseColor, colorIntensity)
+      }
     }
   })
 
@@ -46,7 +56,7 @@ export default function HeartHologram(props: any) {
   }
 
   return (
-    <mesh {...props} ref={meshRef} scale={[1, 1, 1]} position={[0, -0.95, 0]}>
+    <mesh {...props} ref={meshRef} scale={[1, 1, 1]} position={[0, 0, 0]}>
       <extrudeGeometry args={[heartShape, extrudeSettings]} />
       <meshStandardMaterial color="#ff1493" wireframe opacity={1} transparent />
     </mesh>
