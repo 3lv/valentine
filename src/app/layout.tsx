@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import '@/app/globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -11,6 +11,13 @@ export const metadata: Metadata = {
   title: 'Valentine\'s Day Special',
   description: 'A special website for my girlfriend',
 }
+
+export const viewport: Viewport = {
+  themeColor: "#000000",
+  initialScale: 1,
+  width: "device-width",
+  maximumScale: 1,
+};
 
 export default function RootLayout({
   children,
