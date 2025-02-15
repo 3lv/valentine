@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { storage, db } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
+import { serverTimestamp } from 'firebase/firestore';
 import { collection, addDoc, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -20,7 +21,7 @@ import ImageWithSkeleton from '@/components/dashboard/ImageWithSkeleton';
 
 interface BackgroundImage {
   imageUrl: string;
-  timestamp: string;
+  timestamp: any; // or use the specific Firestore Timestamp type
   userId: string;
   isLoading?: boolean;
 }
@@ -54,10 +55,17 @@ export default function BackgroundPage() {
         );
 
         const backgroundsUnsubscribe = onSnapshot(backgroundsQuery, (snapshot) => {
-          const newImages = snapshot.docs.map(doc => ({
-            ...doc.data() as BackgroundImage,
-            isLoading: false
-          }));
+          const newImages = snapshot.docs
+            .map(doc => ({
+              ...doc.data() as BackgroundImage,
+              isLoading: false
+            }))
+            .sort((a, b) => {
+              // Handle cases where timestamp might be a Firestore Timestamp or null
+              const timeA = a.timestamp?.toMillis?.() || 0;
+              const timeB = b.timestamp?.toMillis?.() || 0;
+              return timeB - timeA; // Sort descending (newest first)
+            });
           setImages(newImages);
           setIsLoading(false);
         });
@@ -79,13 +87,16 @@ export default function BackgroundPage() {
     setIsUploading(true);
     setUploadProgress(0);
 
-    // Add a temporary skeleton image
+    const now = serverTimestamp();
+    // Add a temporary skeleton image at the beginning of the array
     const tempImage: BackgroundImage = {
       imageUrl: '',
-      timestamp: new Date().toISOString(),
+      timestamp: now,
       userId: currentUser.uid,
       isLoading: true
     };
+    
+    // Insert the temp image at the beginning, maintaining sort order
     setImages(prev => [tempImage, ...prev]);
 
     try {
@@ -110,7 +121,7 @@ export default function BackgroundPage() {
       await addDoc(collection(db, 'couples', couple.id, 'backgrounds'), {
         userId: currentUser.uid,
         imageUrl: downloadUrl,
-        timestamp: new Date().toISOString(),
+        timestamp: now, // Use the same timestamp as the temp image
         active: true,
         userEmail: currentUser.email,
         userName: currentUser.displayName || currentUser.email?.split('@')[0]
@@ -121,6 +132,7 @@ export default function BackgroundPage() {
         description: "Image uploaded successfully",
       });
     } catch (error) {
+      // Remove the temporary image if upload fails
       setImages(prev => prev.filter(img => !img.isLoading));
       toast({
         title: "Error",
@@ -192,23 +204,58 @@ export default function BackgroundPage() {
         </CardContent>
       </Card>
 
+      {/* Current Background Card */}
+      {images.length > 0 && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Current Background</CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <HoverCard>
+              <HoverCardTrigger>
+                <div className="relative w-[300px] aspect-[16/9] transition-transform hover:scale-105">
+                  <ImageWithSkeleton
+                    src={images[0].imageUrl}
+                    alt="Current Background"
+                    className="border-4 border-white shadow-lg rounded-lg absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Uploaded on: {images[0].timestamp && images[0].timestamp.toDate ? images[0].timestamp.toDate().toLocaleDateString() : 'Unknown date'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Uploaded by: {currentUser.email}
+                  </p>
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Recent Backgrounds</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            {images.map((image) => (
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4 auto-rows-fr">
+            {images
+              .slice(1) // Skip the first image as it's shown above
+              .sort((a, b) => b.timestamp - a.timestamp) // Sort by timestamp, newest first
+              .map((image) => (
               <HoverCard key={image.imageUrl + image.timestamp}>
                 <HoverCardTrigger>
-                  <div className="relative w-full pb-[177.78%] transition-transform hover:scale-105">
+                  <div className="relative aspect-[16/9] transition-transform hover:scale-105">
                     {image.isLoading ? (
                       <Skeleton className="absolute inset-0 w-full h-full rounded-lg" />
                     ) : (
                       <ImageWithSkeleton
                         src={image.imageUrl}
                         alt={`Background ${image.timestamp}`}
-                        className="transition-transform hover:scale-105"
+                        className="rounded-lg absolute inset-0 w-full h-full object-cover"
                       />
                     )}
                   </div>
@@ -217,7 +264,7 @@ export default function BackgroundPage() {
                   <HoverCardContent>
                     <div className="space-y-2">
                       <p className="text-sm text-muted-foreground">
-                        Uploaded on: {new Date(image.timestamp).toLocaleDateString()}
+                        Uploaded on: {image.timestamp && image.timestamp.toDate ? image.timestamp.toDate().toLocaleDateString() : 'Unknown date'}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         Uploaded by: {currentUser.email}

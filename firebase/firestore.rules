@@ -45,7 +45,12 @@ service cloud.firestore {
     match /couples/{coupleId} {
       allow read: if isSignedIn() && 
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.coupleId == coupleId;
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.coupleId == coupleId ||
+        (
+          request.headers.hasAll(['x-api-key']) &&
+          exists(/databases/$(database)/documents/couples/$(coupleId)) &&
+          get(/databases/$(database)/documents/couples/$(coupleId)).data.apiKeys.hasAny([{'key': request.headers['x-api-key']}])
+        );
       
       // Ensure that one of the two members is the authenticated user
       allow create: if isSignedIn() &&
@@ -72,6 +77,28 @@ service cloud.firestore {
       match /backgrounds/{backgroundId} {
         allow read, write: if isSignedIn() && 
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.coupleId == coupleId;
+      }
+
+      // Add rules for pendingApiKeys subcollection
+      match /pendingApiKeys/{requestId} {
+        allow read: if isSignedIn() && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.coupleId == coupleId;
+        
+        allow create: if isSignedIn() && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.coupleId == coupleId &&
+          request.resource.data.requestedBy == request.auth.uid &&
+          request.resource.data.keys().hasOnly(['name', 'requestedBy', 'timestamp']);
+        
+        allow delete: if isSignedIn() && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.coupleId == coupleId;
+      }
+
+      // Add rules for apiKeys subcollection
+      match /apiKeys/{keyId} {
+        allow read: if isSignedIn() && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.coupleId == coupleId;
+        
+        allow write: if false; // Only allow writes through Cloud Functions
       }
     }
   }

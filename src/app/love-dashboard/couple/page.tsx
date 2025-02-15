@@ -34,6 +34,14 @@ interface CoupleRequest {
   timestamp: string;
 }
 
+interface ApiKey {
+  id: string;
+  name: string;
+  key: string;
+  createdAt: string;
+  lastUsed?: string;
+}
+
 interface Couple {
   id: string;
   name: string;
@@ -44,6 +52,7 @@ interface Couple {
     email: string;
     displayName: string;
   }[];
+  apiKeys?: ApiKey[];
 }
 
 export default function CouplePage() {
@@ -57,6 +66,9 @@ export default function CouplePage() {
   const [anniversary, setAnniversary] = useState('');
   const [incomingRequests, setIncomingRequests] = useState<CoupleRequest[]>([]);
   const [outgoingRequests, setOutgoingRequests] = useState<CoupleRequest[]>([]);
+  const [showApiKeys, setShowApiKeys] = useState(false);
+  const [newApiKeyName, setNewApiKeyName] = useState('');
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -238,6 +250,37 @@ export default function CouplePage() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleCreateApiKey = async () => {
+    if (!couple || !currentUser || !newApiKeyName) return;
+
+    try {
+      // Create a new document in the pendingApiKeys subcollection
+      await addDoc(collection(db, 'couples', couple.id, 'pendingApiKeys'), {
+        name: newApiKeyName,
+        requestedBy: currentUser.uid,
+        timestamp: new Date().toISOString(),
+      });
+
+      setNewApiKeyName('');
+      toast({
+        title: "Success",
+        description: "API key creation in progress",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create API key",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const copyToClipboard = (key: string) => {
+    navigator.clipboard.writeText(key);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
   };
 
   if (!currentUser) {
@@ -439,6 +482,54 @@ export default function CouplePage() {
               </div>
             ))}
           </div>
+
+          {!isEditing && (
+            <div className="mt-8 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold">API Keys</h3>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowApiKeys(!showApiKeys)}
+                >
+                  {showApiKeys ? 'Hide' : 'Show'} API Keys
+                </Button>
+              </div>
+              
+              {showApiKeys && (
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="API Key Name"
+                      value={newApiKeyName}
+                      onChange={(e) => setNewApiKeyName(e.target.value)}
+                    />
+                    <Button onClick={handleCreateApiKey}>Create API Key</Button>
+                  </div>
+                  
+                  {couple.apiKeys?.map((apiKey) => (
+                    <div key={apiKey.id} className="p-4 border rounded-lg space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{apiKey.name}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(apiKey.key)}
+                        >
+                          {copiedKey === apiKey.key ? 'Copied!' : 'Copy'}
+                        </Button>
+                      </div>
+                      <div className="flex gap-4 text-sm text-muted-foreground">
+                        <span>Created: {new Date(apiKey.createdAt).toLocaleDateString()}</span>
+                        {apiKey.lastUsed && (
+                          <span>Last used: {new Date(apiKey.lastUsed).toLocaleDateString()}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

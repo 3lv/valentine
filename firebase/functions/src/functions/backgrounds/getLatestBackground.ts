@@ -16,7 +16,7 @@ export const getLatestBackground = onRequest({ cors: true }, async (req, res) =>
   }
 
   try {
-    // Get the couple document directly using coupleId
+    // Retrieve the couple document using coupleId
     const coupleDoc = await admin.firestore()
       .collection('couples')
       .doc(coupleId)
@@ -35,7 +35,7 @@ export const getLatestBackground = onRequest({ cors: true }, async (req, res) =>
       return;
     }
     
-    // Get the latest background
+    // Fetch the latest active background
     const backgroundsSnapshot = await coupleDoc.ref
       .collection('backgrounds')
       .where('active', '==', true)
@@ -44,27 +44,30 @@ export const getLatestBackground = onRequest({ cors: true }, async (req, res) =>
       .get();
 
     if (backgroundsSnapshot.empty) {
-      res.status(404).json({ message: 'No backgrounds found' });
+      res.status(404).send('No backgrounds found');
       return;
     }
 
     const background = backgroundsSnapshot.docs[0].data();
     
-    // Get the image from the direct download URL and convert to base64
+    // Fetch the image from the imageUrl
     const imageUrl = background.imageUrl;
     const response = await fetch(imageUrl);
     
     if (!response.ok) {
       throw new Error('Failed to download image');
     }
-    
-    const buffer = await response.arrayBuffer();
-    const base64Image = Buffer.from(buffer).toString('base64');
 
-    res.status(200).json({
-      ...background,
-      image: base64Image
-    });
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    
+    // Set response headers for the image
+    res.set('Content-Type', contentType);
+    //res.set('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+
+    // Buffer the image and send it
+    const buffer = Buffer.from(await response.arrayBuffer());
+    res.send(buffer);
+    
   } catch (error) {
     console.error('Error getting latest background:', error);
     res.status(500).send('Internal Server Error');

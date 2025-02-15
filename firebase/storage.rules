@@ -20,14 +20,16 @@ service firebase.storage {
         request.resource.contentType.matches('image/.*'); // Only images
     }
     
-    //match /couples/{coupleId}/backgrounds/{fileName} {
-    //  allow read, write: if isSignedIn();
-    //}
-    
-    
     match /couples/{coupleId}/backgrounds/{fileName} {
-      allow read, write: if isSignedIn() &&
-      request.auth.token.coupleId == coupleId;
+      allow read, write: if 
+        // Allow access for authenticated users with matching coupleId
+        (isSignedIn() && request.auth.token.coupleId == coupleId) ||
+        // Allow access for API requests with valid API key
+        (
+          request.headers.hasAll(['x-api-key']) &&
+          exists(/databases/$(database)/documents/couples/$(coupleId)) &&
+          get(/databases/$(database)/documents/couples/$(coupleId)).data.apiKeys.hasAny([{'key': request.headers['x-api-key']}])
+        );
     }
   }
 }

@@ -40,3 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 firebase/valentine-b-firebase-adminsdk-fbsvc-7c86f5124b.json
+tests/GET-latest-background.sh
+tests/POST-upload-background.sh
+firebase/latest-background.jpg
+tests/testimage.jpg
