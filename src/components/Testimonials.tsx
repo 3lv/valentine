@@ -46,7 +46,7 @@ export default function Testimonials() {
     },
   ];
   return (
-    <section id="testimonials" className="w-full py-12 md:py-24 lg:py-32">
+    <section id="testimonials" className="w-full py-24 md:py-32 lg:py-64">
       <div className="container px-4 md:px-6 mx-auto">
         <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-center mb-12">Love Album Demo</h2>
         <AnimatedTestimonials testimonials={testimonials} />

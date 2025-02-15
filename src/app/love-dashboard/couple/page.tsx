@@ -362,7 +362,7 @@ export default function CouplePage() {
   const daysSinceAnniversary = differenceInDays(new Date(), new Date(couple.anniversary));
 
   return (
-    <div className="container mx-auto p-8">
+    <div className="container mx-auto p-4 sm:p-8">
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <div className="flex justify-between items-center">
@@ -413,27 +413,30 @@ export default function CouplePage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-8">
-          <div className="flex items-center gap-2 text-lg">
-            <CalendarIcon className="h-5 w-5" />
-            <span>Together since {format(new Date(couple.anniversary), 'PP')} ({daysSinceAnniversary} days)</span>
+          <div className="flex flex-col sm:flex-row items-center gap-2 text-lg text-center sm:text-left">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5 flex-shrink-0" />
+              <span>Together since</span>
+            </div>
+            <div className="flex flex-wrap justify-center sm:justify-start gap-1">
+              <span>{format(new Date(couple.anniversary), 'PP')}</span>
+              <span>({daysSinceAnniversary} days)</span>
+            </div>
           </div>
           
-          <div className="flex justify-center items-center gap-8">
+          <div className="flex justify-center items-center gap-4">
             {couple.members.map((member, index) => (
-              <>
-                <div key={member.id || index} className="flex flex-col items-center gap-4">
-                  <div className="h-20 w-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-medium">
+              <div key={member.id} className="flex items-center gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-medium">
                     {member.displayName[0].toUpperCase()}
                   </div>
-                  <div className="flex flex-col items-center">
-                    <span className="font-medium text-lg">{member.displayName}</span>
-                    <span className="text-sm text-muted-foreground">{member.email}</span>
-                  </div>
+                  <span className="font-medium text-lg mt-2">{member.displayName}</span>
                 </div>
                 {index === 0 && (
-                  <Heart className="h-8 w-8 text-pink-500 animate-pulse" fill="currentColor" />
+                  <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-pink-500 animate-pulse flex-shrink-0" fill="currentColor" />
                 )}
-              </>
+              </div>
             ))}
           </div>
         </CardContent>
