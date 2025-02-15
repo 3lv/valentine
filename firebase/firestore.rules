@@ -11,10 +11,10 @@ service cloud.firestore {
     }
     
     match /users/{userId} {
-  		allow read: if isSignedIn() && request.auth.uid == userId;
-  		allow create: if isSignedIn() && request.auth.uid == userId;
-  		allow update: if isSignedIn() && request.auth.uid == userId;
-		}
+      allow read: if isSignedIn(); // relaxed rule for reading other's profiles
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId;
+    }
 
     // Couple Requests rules
     match /coupleRequests/{requestId} {
@@ -28,7 +28,6 @@ service cloud.firestore {
         request.resource.data.fromUserEmail == request.auth.token.email &&
         request.resource.data.status == 'pending' &&
         request.resource.data.toUserEmail != request.auth.token.email;
-      
       
       allow update: if isSignedIn() && 
         isUserEmail(resource.data.toUserEmail) &&
@@ -48,21 +47,25 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.coupleId == coupleId;
       
+      // Ensure that one of the two members is the authenticated user
       allow create: if isSignedIn() &&
         request.resource.data.members[0].id != request.resource.data.members[1].id &&
         (
-          request.resource.data.members[1].id == request.auth.uid ||
+          request.resource.data.members[0].id == request.auth.uid ||
           request.resource.data.members[1].id == request.auth.uid
         );
       
-      allow update: if isSignedIn() && 
-        resource.data.members.hasAny([{
-          email: request.auth.token.email,
-          id: request.auth.uid
-        }]) &&
+      // Check that the user is one of the members by matching the id and email
+      // This avoids an exact map match so additional fields (like displayName) are allowed.
+      allow update: if isSignedIn() &&
+        (
+          (resource.data.members[0].id == request.auth.uid && resource.data.members[0].email == request.auth.token.email) ||
+          (resource.data.members[1].id == request.auth.uid && resource.data.members[1].email == request.auth.token.email)
+        ) &&
+        // Prevent changing the members array
         request.resource.data.members == resource.data.members &&
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['name', 'anniversary']);
+        // Allow updates only to the 'name' and 'anniversary' fields
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'anniversary', 'description']);
       
       allow delete: if false; // Prevent deletion for now
 

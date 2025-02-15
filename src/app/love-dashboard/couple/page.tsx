@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CalendarIcon, Pencil } from 'lucide-react';
+import { CalendarIcon, Pencil, Heart } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { 
   collection, 
@@ -20,6 +20,7 @@ import {
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { format, differenceInDays } from 'date-fns';
+import { Textarea } from '@/components/ui/textarea';
 
 interface CoupleRequest {
   id: string;
@@ -36,6 +37,7 @@ interface CoupleRequest {
 interface Couple {
   id: string;
   name: string;
+  description: string;
   anniversary: string;
   members: {
     id: string;
@@ -51,6 +53,7 @@ export default function CouplePage() {
   const [searchEmail, setSearchEmail] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [coupleName, setCoupleName] = useState('');
+  const [coupleDescription, setCoupleDescription] = useState('');
   const [anniversary, setAnniversary] = useState('');
   const [incomingRequests, setIncomingRequests] = useState<CoupleRequest[]>([]);
   const [outgoingRequests, setOutgoingRequests] = useState<CoupleRequest[]>([]);
@@ -69,6 +72,7 @@ export default function CouplePage() {
             const coupleData = coupleDoc.data() as Omit<Couple, 'id'>;
             setCouple({ ...coupleData, id: coupleDoc.id });
             setCoupleName(coupleData.name);
+            setCoupleDescription(coupleData.description || '');
             setAnniversary(coupleData.anniversary);
           } else {
             setCouple(null);
@@ -217,6 +221,7 @@ export default function CouplePage() {
     try {
       await updateDoc(doc(db, 'couples', couple.id), {
         name: coupleName,
+        description: coupleDescription,
         anniversary: anniversary,
       });
 
@@ -357,18 +362,29 @@ export default function CouplePage() {
   const daysSinceAnniversary = differenceInDays(new Date(), new Date(couple.anniversary));
 
   return (
-    <div className="container mx-auto p-4">
-      <Card>
+    <div className="container mx-auto p-8">
+      <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <div className="flex justify-between items-center">
             {isEditing ? (
-              <div className="space-y-4 w-full">
+              <div className="space-y-6 w-full">
                 <div>
                   <Label htmlFor="coupleName">Couple Name</Label>
                   <Input
                     id="coupleName"
                     value={coupleName}
                     onChange={(e) => setCoupleName(e.target.value)}
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="coupleDescription">Couple Description</Label>
+                  <Textarea
+                    id="coupleDescription"
+                    value={coupleDescription}
+                    onChange={(e) => setCoupleDescription(e.target.value)}
+                    className="mt-2"
+                    placeholder="Write something about your relationship..."
                   />
                 </div>
                 <div>
@@ -378,37 +394,46 @@ export default function CouplePage() {
                     type="date"
                     value={anniversary}
                     onChange={(e) => setAnniversary(e.target.value)}
+                    className="mt-2"
                   />
                 </div>
-                <Button onClick={handleUpdateCouple}>Save</Button>
+                <Button onClick={handleUpdateCouple} className="w-full">Save Changes</Button>
               </div>
             ) : (
               <>
-                <CardTitle>{couple.name}</CardTitle>
+                <div>
+                  <CardTitle className="text-3xl mb-2">{couple.name}</CardTitle>
+                  <CardDescription className="text-lg">{coupleDescription}</CardDescription>
+                </div>
                 <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
-                  <Pencil className="h-4 w-4" />
+                  <Pencil className="h-5 w-5" />
                 </Button>
               </>
             )}
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4" />
+        <CardContent className="space-y-8">
+          <div className="flex items-center gap-2 text-lg">
+            <CalendarIcon className="h-5 w-5" />
             <span>Together since {format(new Date(couple.anniversary), 'PP')} ({daysSinceAnniversary} days)</span>
           </div>
           
-          <div className="flex gap-4">
+          <div className="flex justify-center items-center gap-8">
             {couple.members.map((member, index) => (
-              <div key={member.id || index} className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-medium">
-                  {member.displayName[0].toUpperCase()}
+              <>
+                <div key={member.id || index} className="flex flex-col items-center gap-4">
+                  <div className="h-20 w-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-medium">
+                    {member.displayName[0].toUpperCase()}
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="font-medium text-lg">{member.displayName}</span>
+                    <span className="text-sm text-muted-foreground">{member.email}</span>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="font-medium">{member.displayName}</span>
-                  <span className="text-sm text-muted-foreground">{member.email}</span>
-                </div>
-              </div>
+                {index === 0 && (
+                  <Heart className="h-8 w-8 text-pink-500 animate-pulse" fill="currentColor" />
+                )}
+              </>
             ))}
           </div>
         </CardContent>

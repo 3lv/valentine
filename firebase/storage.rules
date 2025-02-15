@@ -6,9 +6,6 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    function getUserData() {
-      return get(/databases/(default)/documents/users/$(request.auth.uid)).data;
-    }
 
     // Default rule - deny all access
     match /{allPaths=**} {
@@ -22,10 +19,15 @@ service firebase.storage {
         request.resource.size < 5 * 1024 * 1024 && // 5MB max
         request.resource.contentType.matches('image/.*'); // Only images
     }
-
+    
+    //match /couples/{coupleId}/backgrounds/{fileName} {
+    //  allow read, write: if isSignedIn();
+    //}
+    
+    
     match /couples/{coupleId}/backgrounds/{fileName} {
       allow read, write: if isSignedIn() &&
-        getUserData().coupleId == coupleId;
+      request.auth.token.coupleId == coupleId;
     }
   }
 }
