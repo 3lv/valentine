@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CalendarIcon, Pencil, Heart } from 'lucide-react';
+import { CalendarIcon, Pencil, Heart, Copy } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { 
   collection, 
@@ -444,9 +444,26 @@ export default function CouplePage() {
               </div>
             ) : (
               <>
-                <div>
-                  <CardTitle className="text-3xl mb-2">{couple.name}</CardTitle>
-                  <CardDescription className="text-lg">{coupleDescription}</CardDescription>
+                <div className="flex items-center gap-2 mb-2">
+                  <CardTitle className="text-3xl">{couple.name}</CardTitle>
+                  <div className="flex flex-col items-center">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => {
+                        navigator.clipboard.writeText(couple.id);
+                        toast({
+                          title: "Copied!",
+                          description: "Couple ID copied to clipboard",
+                          duration: 2000,
+                        });
+                      }}
+                      className="h-8 w-8"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    <span className="text-xs text-muted-foreground">Copy ID</span>
+                  </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
                   <Pencil className="h-5 w-5" />
