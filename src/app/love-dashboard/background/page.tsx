@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { storage, db } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
 import { serverTimestamp } from 'firebase/firestore';
-import { collection, addDoc, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, onSnapshot, doc, getDoc, orderBy, limit } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import {
   HoverCard,
@@ -51,7 +51,9 @@ export default function BackgroundPage() {
         
         const backgroundsQuery = query(
           collection(db, 'couples', coupleId, 'backgrounds'),
-          where('active', '==', true)
+          where('active', '==', true),
+          orderBy('timestamp', 'desc'),
+          limit(11) // 1 current + 10 recent
         );
 
         const backgroundsUnsubscribe = onSnapshot(backgroundsQuery, (snapshot) => {
@@ -243,8 +245,7 @@ export default function BackgroundPage() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4 auto-rows-fr">
             {images
-              .slice(1) // Skip the first image as it's shown above
-              .sort((a, b) => b.timestamp - a.timestamp) // Sort by timestamp, newest first
+              .slice(1, 11) // Take only 10 items after the first one
               .map((image) => (
               <HoverCard key={image.imageUrl + image.timestamp}>
                 <HoverCardTrigger>
